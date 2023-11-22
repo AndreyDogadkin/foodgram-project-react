@@ -104,7 +104,7 @@ class AmountIngredient(models.Model):
             models.UniqueConstraint(
                 fields=('ingredient', 'amount'),
                 name='ingredient_amount_uniq'
-            )
+            ),
         )
         verbose_name = 'Количество ингредиента'
         verbose_name_plural = 'Количество ингредиентов'
@@ -125,7 +125,8 @@ class RecipeTag(models.Model):
     class Meta:
         constraints = (models.UniqueConstraint(
             fields=('recipe', 'tag'),
-            name='recipe_tag_uniq'),
+            name='recipe_tag_uniq'
+            ),
         )
         verbose_name = 'Тег рецепта'
         verbose_name_plural = 'Теги рецептов'
@@ -146,7 +147,8 @@ class RecipeAmountIngredient(models.Model):
     class Meta:
         constraints = (models.UniqueConstraint(
             fields=('recipe', 'ingredient'),
-            name='recipe_ingredient_uniq'),
+            name='recipe_ingredient_uniq'
+            ),
         )
         verbose_name = 'Количество ингредиента в рецепте'
         verbose_name_plural = 'Количество ингредиентов в рецептах'
