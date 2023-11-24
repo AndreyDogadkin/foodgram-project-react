@@ -5,10 +5,10 @@ from rest_framework.viewsets import ModelViewSet
 from api.pagination import RecipePagination
 from api.permissions import AdminOrReadOnly
 from api.serializers import (RecipeReadSerializer,
-                             RecipeSerializer,
+                             RecipeCreateSerializer,
                              TagSerializer,
                              IngredientSerializer)
-from recipes.models import Recipe, Tag, Ingredient
+from recipes.models import Recipe, Tag, Ingredient, User
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
@@ -30,11 +30,15 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
 class RecipeViewSet(ModelViewSet):
 
     queryset = Recipe.objects.all()
-    # permission_classes = ...
-    # filter_backends = ...
+    # permission_classes = None
+    # filter_backends = None
     pagination_class = RecipePagination
 
     def get_serializer_class(self):
         if self.request.method in SAFE_METHODS:
             return RecipeReadSerializer
-        return RecipeSerializer
+        return RecipeCreateSerializer
+
+    def perform_create(self, serializer):
+        user = User.objects.first()
+        serializer.save(author=user)

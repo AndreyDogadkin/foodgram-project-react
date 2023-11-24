@@ -53,6 +53,12 @@ class Recipe(models.Model):
         return self.name
 
     class Meta:
+        constraints = (
+            models.UniqueConstraint(
+                fields=('name', 'author'),
+                name='recipe_name_author_uniq'
+            ),
+        )
         ordering = ('-pub_date',)
         verbose_name = 'Рецепт'
         verbose_name_plural = 'Рецепты'
@@ -143,10 +149,6 @@ class RecipeIngredient(models.Model):
                 fields=('recipe', 'ingredient'),
                 name='recipe_ingredient_uniq'
             ),
-            models.UniqueConstraint(
-                fields=('recipe', 'amount'),
-                name='recipe_amount_uniq'
-            )
         )
         verbose_name = 'Количество ингредиента'
         verbose_name_plural = 'Количество ингредиентов'

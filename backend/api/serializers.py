@@ -17,8 +17,9 @@ User = get_user_model()
 class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
-        fields = '__all__'
-        read_only_fields = '__all__'
+        model = User
+        fields = ('username', 'last_name', )
+        read_only_fields = ('__all__', )
 
 
 class Base64ImageField(serializers.ImageField):
@@ -46,10 +47,11 @@ class IngredientSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'measurement_unit')
 
 
-class RecipeIngredientSerializer(serializers.ModelSerializer):
+class RecipeIngredientReadSerializer(serializers.ModelSerializer):
     """
     Сериализатор для вспомогательной модели рецепта
     и ингредиентов с их количеством.
+    Используется для вывода ингредиентов в представлении рецептов.
     """
 
     id = serializers.ReadOnlyField(source='ingredient.id')
@@ -64,10 +66,13 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
 
 
 class RecipeReadSerializer(serializers.ModelSerializer):
+    """
+    Сериализатор представления рецептов.
+    """
 
     tags = TagSerializer(many=True, read_only=True)
     author = UserSerializer()  # TODO User serializer
-    ingredients = RecipeIngredientSerializer(
+    ingredients = RecipeIngredientReadSerializer(
         many=True,
         source='recipe_ingredient'
     )
@@ -92,39 +97,72 @@ class RecipeReadSerializer(serializers.ModelSerializer):
                   'author', 'is_favorited', 'is_in_shopping_cart')
 
 
-class RecipeSerializer(serializers.ModelSerializer):
+class RecipeIngredientCreateSerializer(serializers.ModelSerializer):
+    """
+    Сериализатор для вспомогательной модели рецепта
+    и ингредиентов с их количеством.
+    Используется для создания и обновления рецептов.
+    """
+
+    id = serializers.PrimaryKeyRelatedField(
+        queryset=Ingredient.objects.all()
+    )
+
+    class Meta:
+        model = RecipeIngredient
+        fields = ('id', 'amount')
+
+
+class RecipeCreateSerializer(serializers.ModelSerializer):
     image = Base64ImageField(required=True)
     tags = serializers.PrimaryKeyRelatedField(
         queryset=Tag.objects.all(),
         many=True
     )
-    ingredients = IngredientSerializer(
+    ingredients = RecipeIngredientCreateSerializer(
         many=True
     )
     author = UserSerializer(read_only=True)  # TODO USER serializer
 
-    def validate_tags(self, tags):
-        ...
-
-    def validate_ingredients(self, value):
-        ...
+    # def validate_tags(self, tags):
+    #     ...
+    #
+    # def validate_ingredients(self, value):
+    #     ...
 
     def create(self, validated_data):
         tags = validated_data.pop('tags')
         ingredients = validated_data.pop('ingredients')
         recipe = Recipe.objects.create(**validated_data)
         recipe.tags.set(tags)
-        bulk_ingredients = list()
-        for ingredient, amount in ingredients.values():
-            bulk_ingredients.append(
-                RecipeIngredient(
-                    recipe=recipe, ingredients=ingredient, amount=amount
-                )
+        for ingredient in ingredients:
+            RecipeIngredient.objects.update_or_create(
+                recipe=recipe, ingredient=ingredient['id'], amount=ingredient['amount']
             )
-        RecipeIngredient.objects.bulk_create(bulk_ingredients)
         return recipe
+
+    def update(self, instance: Recipe, validated_data):
+        tags = validated_data.pop('tags')
+        ingredients = validated_data.pop('ingredients')
+        if tags:
+            instance.tags.clear()
+            instance.tags.set(tags)
+        if ingredients:
+            instance.ingredients.clear()
+            for ingredient, amount in ingredients.values():
+                RecipeIngredient.objects.update_or_create(
+                    recipe=instance, ingredients=ingredient, amount=amount
+                )
+        return super().update(instance, validated_data)
+
+    def to_representation(self, instance: Recipe):
+        response = super().to_representation(instance)
+        response['ingredients'] = RecipeIngredientReadSerializer(
+            instance.recipe_ingredient.all(), many=True
+        ).data
+        return response
 
     class Meta:
         model = Recipe
-        fields = ('ingredients', 'tags', 'image',
-                  'name', 'text', 'cooking_time', 'author')
+        fields = ('tags', 'ingredients', 'name',
+                  'image', 'text', 'cooking_time', 'author')
