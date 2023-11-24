@@ -83,6 +83,7 @@ class Tag(models.Model):
     class Meta:
         verbose_name = 'Тег'
         verbose_name_plural = 'Теги'
+        ordering = ('-name', )
 
 
 class Ingredient(models.Model):
@@ -128,8 +129,10 @@ class RecipeIngredient(models.Model):
     )
     amount = models.PositiveSmallIntegerField(
         validators=[
-            MinValueValidator(limit_value=1, message='Минимальное значение "1".'),
-            MaxValueValidator(limit_value=100000, message='Слишком большое значение.')],  # TODO Вынести константы
+            MinValueValidator(limit_value=1,
+                              message='Минимальное значение "1".'),
+            MaxValueValidator(limit_value=100000,
+                              message='Слишком большое значение.')],  # TODO Вынести константы
         default=0,
         verbose_name='Количество'
     )
