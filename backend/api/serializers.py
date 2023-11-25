@@ -19,7 +19,8 @@ class UserSerializer(serializers.ModelSerializer):  # TODO удалить пос
 
     class Meta:
         model = User
-        fields = ('username', 'last_name', )
+        fields = ('email', 'id', 'username',
+                  'first_name', 'last_name', )  # TODO Добавить поле is_subscribed
         read_only_fields = ('__all__', )
 
 
@@ -198,3 +199,30 @@ class RecipeCreateSerializer(RecipeReadSerializer):
             instance.tags.all(), many=True
         ).data
         return response
+
+
+class FavoritesSerializer(serializers.ModelSerializer):
+
+    id = serializers.PrimaryKeyRelatedField(
+        source='recipe',
+        read_only=True
+    )
+    name = serializers.ReadOnlyField(
+        source='recipe.name'
+    )
+    image = serializers.ImageField(
+        source='recipe.image',
+        read_only=True
+    )
+    cooking_time = serializers.IntegerField(
+        source='recipe.cooking_time',
+        read_only=True
+    )
+
+    class Meta:
+        model = Favorites
+        fields = ('id', 'name', 'image', 'cooking_time')
+
+
+class ShoppingListSerializer(serializers.ModelSerializer):
+    ...

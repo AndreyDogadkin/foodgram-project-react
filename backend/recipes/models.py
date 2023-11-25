@@ -89,7 +89,6 @@ class Tag(models.Model):
     class Meta:
         verbose_name = 'Тег'
         verbose_name_plural = 'Теги'
-        ordering = ('-name', )
 
 
 class Ingredient(models.Model):
