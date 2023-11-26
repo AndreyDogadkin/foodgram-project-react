@@ -224,5 +224,8 @@ class FavoritesSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'image', 'cooking_time')
 
 
-class ShoppingListSerializer(serializers.ModelSerializer):
-    ...
+class ShoppingListSerializer(FavoritesSerializer):
+
+    class Meta:
+        model = ShoppingList
+        fields = ('id', 'name', 'image', 'cooking_time')

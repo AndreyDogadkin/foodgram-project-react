@@ -11,8 +11,14 @@ from api.serializers import (RecipeReadSerializer,
                              RecipeCreateSerializer,
                              TagSerializer,
                              IngredientSerializer,
-                             FavoritesSerializer)
-from recipes.models import Recipe, Tag, Ingredient, User, Favorites
+                             FavoritesSerializer,
+                             ShoppingListSerializer)
+from recipes.models import (Recipe,
+                            Tag,
+                            Ingredient,
+                            User,
+                            Favorites,
+                            ShoppingList)
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
@@ -36,6 +42,7 @@ class RecipeViewSet(ModelViewSet):
     queryset = Recipe.objects.all()
     # permission_classes = None  # TODO Добавить права доступа
     # filter_backends = None
+    # filterset_class = None
     pagination_class = RecipePagination
 
     def update(self, request: Request, *args, **kwargs):
@@ -53,31 +60,68 @@ class RecipeViewSet(ModelViewSet):
         user = User.objects.first()  # TODO Исправить на /user = self.request.user/
         serializer.save(author=user)
 
+    @staticmethod
+    def __extra_actions(request: Request, serializer, model, pk: int):
+        user = User.objects.first()  # TODO Исправить на /user = self.request.user/
+        recipe: Recipe = get_object_or_404(Recipe, id=pk)
+        object_exists: bool = model.objects.filter(
+            user=user,
+            recipe=recipe
+        ).exists()
+
+        if request.method == 'POST':
+            if object_exists:
+                return Response(
+                    {'errors': 'Выбранный рецепт уже добавлен.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            obj_serializer = serializer(data=request.data)
+            obj_serializer.is_valid(raise_exception=True)
+            obj_serializer.save(user=user, recipe=recipe)
+            return Response(
+                obj_serializer.data,
+                status=status.HTTP_201_CREATED)
+
+        if not object_exists:
+            return Response(
+                data={'errors': 'Выбранный рецепт ранее не был добавлен.'},
+                status=status.HTTP_400_BAD_REQUEST)
+
+        model.objects.get(user=user, recipe=recipe).delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
     @action(
         detail=True,
         methods=['post', 'delete'],
         # permission_classes = [],  # TODO Добавить права доступа
     )
-    def favorite(self, request: Request, *args, **kwargs):
-        recipe_id = kwargs.get('pk')
-        user = User.objects.first()  # TODO Исправить на /user = self.request.user/
-        recipe: Recipe = get_object_or_404(Recipe, id=recipe_id)
-        favorite_exists: bool = Favorites.objects.filter(user=user, recipe=recipe).exists()
-        if request.method == 'POST':
-            if favorite_exists:
-                return Response(
-                    {'errors': 'Выбранный рецепт уже в избранном.'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            serializer = FavoritesSerializer(data=request.data)
-            serializer.is_valid(raise_exception=True)
-            serializer.save(user=user, recipe=recipe)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+    def favorite(self, request: Request, pk: int):
+        print(pk)
+        return self.__extra_actions(
+            request=request,
+            serializer=FavoritesSerializer,
+            model=Favorites,
+            pk=pk
+        )
 
-        if not favorite_exists:
-            return Response(data={'errors': 'Выбранный рецепт не находится в избранном.'},
-                            status=status.HTTP_400_BAD_REQUEST)
+    @action(
+        detail=True,
+        methods=['post', 'delete'],
+        # permission_classes = [],  # TODO Добавить права доступа
+    )
+    def shopping_cart(self, request: Request, pk: int):
+        print(type(ShoppingList))
+        return self.__extra_actions(
+            request=request,
+            serializer=ShoppingListSerializer,
+            model=ShoppingList,
+            pk=pk
+        )
 
-        Favorites.objects.get(user=user, recipe=recipe).delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
+    @action(
+        detail=False,
+        methods=['get', ],
+        # permission_classes = [],  # TODO Добавить права доступа
+    )
+    def download_shopping_cart(self, request):
+        ...
