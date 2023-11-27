@@ -1,9 +1,12 @@
+from django.db.models import Sum
+from django.http import HttpResponse
 from rest_framework import viewsets, filters, status
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
+from reportlab.pdfgen import canvas
 
 from api.pagination import RecipePagination
 from api.permissions import AdminOrReadOnly
@@ -16,6 +19,7 @@ from api.serializers import (RecipeReadSerializer,
 from recipes.models import (Recipe,
                             Tag,
                             Ingredient,
+                            RecipeIngredient,
                             User,
                             Favorites,
                             ShoppingList)
@@ -96,7 +100,6 @@ class RecipeViewSet(ModelViewSet):
         # permission_classes = [],  # TODO Добавить права доступа
     )
     def favorite(self, request: Request, pk: int):
-        print(pk)
         return self.__extra_actions(
             request=request,
             serializer=FavoritesSerializer,
@@ -110,7 +113,6 @@ class RecipeViewSet(ModelViewSet):
         # permission_classes = [],  # TODO Добавить права доступа
     )
     def shopping_cart(self, request: Request, pk: int):
-        print(type(ShoppingList))
         return self.__extra_actions(
             request=request,
             serializer=ShoppingListSerializer,
@@ -123,5 +125,39 @@ class RecipeViewSet(ModelViewSet):
         methods=['get', ],
         # permission_classes = [],  # TODO Добавить права доступа
     )
-    def download_shopping_cart(self, request):
-        ...
+    def download_shopping_cart(self, request: Request):
+        user = User.objects.first()  # TODO Исправить на /user = self.request.user/
+        if user.shop_list.exists():
+            response = HttpResponse(
+                content_type='application/pdf')
+            response['Content-Disposition'] = (
+                f'attachment; filename="{user.username}_shop_list"'
+            )
+            shopping_list_pdf = canvas.Canvas(response)
+            shopping_list_pdf.setFont('Times-Roman', 50)
+            shopping_list_pdf.drawString(
+                100,
+                500,
+                f'{user.username}:')
+            shopping_list = RecipeIngredient.objects.filter(
+                recipe__shop_list__user=user
+            ).values(
+                'ingredient__name', 'ingredient__measurement_unit'
+            ).annotate(sum_amount=Sum('amount', distinct=True))
+            y_coord = 600
+            for l_item in shopping_list:
+                line = '{} --> {} {}'.format(
+                    l_item['ingredient__name'],
+                    l_item['sum_amount'],
+                    l_item['ingredient__measurement_unit']
+                )
+                shopping_list_pdf.drawString(x=150, y=y_coord, text=line)
+                y_coord += 25
+            shopping_list_pdf.showPage()
+            shopping_list_pdf.save()
+            return response
+
+        return Response(
+            data={'errors': 'Список покупок пуст.'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
