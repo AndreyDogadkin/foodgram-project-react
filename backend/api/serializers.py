@@ -1,7 +1,6 @@
 import base64
 
 import webcolors
-from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
 from rest_framework import serializers
 
@@ -11,17 +10,7 @@ from recipes.models import (Recipe,
                             RecipeIngredient,
                             Favorites,
                             ShoppingList)
-
-User = get_user_model()
-
-
-class UserSerializer(serializers.ModelSerializer):  # TODO удалить после ручных тестов
-
-    class Meta:
-        model = User
-        fields = ('email', 'id', 'username',
-                  'first_name', 'last_name', )  # TODO Добавить поле is_subscribed
-        read_only_fields = ('__all__', )
+from users.serializers import UserReadSerializer
 
 
 class Base64ImageField(serializers.ImageField):
@@ -90,7 +79,7 @@ class RecipeReadSerializer(serializers.ModelSerializer):
     """
 
     tags = TagSerializer(many=True, read_only=True)
-    author = UserSerializer(read_only=True)  # TODO User serializer
+    author = UserReadSerializer(read_only=True)  # TODO User serializer
     ingredients = RecipeIngredientReadSerializer(
         many=True,
         source='recipe_ingredient'

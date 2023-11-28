@@ -8,7 +8,6 @@ class FoodgramUser(AbstractUser):
         ('user', 'user'),
         ('admin', 'admin'),
     )
-
     role = models.CharField(
         choices=ROLE_CHOICES,
         default='user',

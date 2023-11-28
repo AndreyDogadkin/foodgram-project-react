@@ -12,13 +12,15 @@ from api.serializers import (RecipeReadSerializer,
                              RecipeCreateSerializer,
                              TagSerializer,
                              IngredientSerializer,
-                             FavoritesSerializer, )
+                             FavoritesSerializer,
+                             ShoppingListSerializer)
 from api.services import ShoppingListCreator
 from recipes.models import (Recipe,
                             Tag,
                             Ingredient,
                             User,
-                            Favorites, )
+                            Favorites,
+                            ShoppingList)
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
@@ -63,10 +65,15 @@ class RecipeViewSet(ModelViewSet):
     def get_serializer_class(self):
         if self.action in ['list', 'retrieve']:
             return RecipeReadSerializer
+        elif self.action == 'favorite':
+            return FavoritesSerializer
+        elif self.action == 'shopping_cart':
+            return ShoppingListSerializer
         return RecipeCreateSerializer
 
     def perform_create(self, serializer: RecipeCreateSerializer):
         user = User.objects.first()  # TODO Исправить на /user = self.request.user/
+        serializer.is_valid(raise_exception=True)
         serializer.save(author=user)
 
     def __get_user_recipe_object_exists(self, model, pk):
@@ -81,7 +88,7 @@ class RecipeViewSet(ModelViewSet):
         ).exists()
         return user, recipe, object_exists
 
-    def __post_extra_action(self, request: Request, serializer, model, pk):
+    def __post_extra_action(self, request: Request, model, pk):
         """
         ...
         """
@@ -94,14 +101,14 @@ class RecipeViewSet(ModelViewSet):
                 {'errors': 'Выбранный рецепт уже добавлен.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        obj_serializer = serializer(data=request.data)
-        obj_serializer.is_valid(raise_exception=True)
-        obj_serializer.save(user=user, recipe=recipe)
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(user=user, recipe=recipe)
         return Response(
-            obj_serializer.data,
+            serializer.data,
             status=status.HTTP_201_CREATED)
 
-    def __delete_extra_acton(self, request: Request, model, pk):
+    def __delete_extra_action(self, request: Request, model, pk):
         """
         ...
         """
@@ -125,14 +132,13 @@ class RecipeViewSet(ModelViewSet):
     def favorite(self, request: Request, pk: int):
         return self.__post_extra_action(
             request=request,
-            serializer=FavoritesSerializer,
             model=Favorites,
             pk=pk
         )
 
     @favorite.mapping.delete
     def delete_favorite(self, request: Request, pk: int):
-        return self.__delete_extra_acton(
+        return self.__delete_extra_action(
             request=request,
             model=Favorites,
             pk=pk
@@ -146,16 +152,15 @@ class RecipeViewSet(ModelViewSet):
     def shopping_cart(self, request: Request, pk: int):
         return self.__post_extra_action(
             request=request,
-            serializer=FavoritesSerializer,
-            model=Favorites,
+            model=ShoppingList,
             pk=pk
         )
 
     @shopping_cart.mapping.delete
     def delete_shopping_cart(self, request: Request, pk: int):
-        return self.__delete_extra_acton(
+        return self.__delete_extra_action(
             request=request,
-            model=Favorites,
+            model=ShoppingList,
             pk=pk
         )
 

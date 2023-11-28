@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'rest_framework.authtoken',
     'django_filters',
     'users.apps.UsersConfig',
     'api.apps.ApiConfig',
@@ -134,16 +135,15 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.AllowAny',
     ],
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'rest_framework.authentication.TokenAuthentication',
     ),
     # 'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     # 'PAGE_SIZE': 10
 }
 
 AUTH_USER_MODEL = 'users.FoodgramUser'
+DJOSER = {
+    'LOGIN_FIELD': 'email',
+}
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-
-SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(days=30)
-}
