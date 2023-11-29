@@ -56,3 +56,4 @@ class Follow(models.Model):
                 name='user_followed_uniq'
             ),
         )
+        ordering = ('-added_date', )

@@ -161,7 +161,9 @@ class RecipeCreateSerializer(RecipeReadSerializer):
         recipe.tags.set(tags)
         for ingredient in ingredients:
             RecipeIngredient.objects.update_or_create(
-                recipe=recipe, ingredient=ingredient['id'], amount=ingredient['amount']
+                recipe=recipe,
+                ingredient=ingredient['id'],
+                amount=ingredient['amount']
             )
         return recipe
 
@@ -175,7 +177,9 @@ class RecipeCreateSerializer(RecipeReadSerializer):
             instance.ingredients.clear()
             for ingredient in ingredients:
                 RecipeIngredient.objects.update_or_create(
-                    recipe=instance, ingredient=ingredient['id'], amount=ingredient['amount']
+                    recipe=instance,
+                    ingredient=ingredient['id'],
+                    amount=ingredient['amount']
                 )
         return super().update(instance, validated_data)
 
