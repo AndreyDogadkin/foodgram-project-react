@@ -6,7 +6,7 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
-from api.pagination import RecipePagination
+from api.pagination import CustomPagination
 from api.permissions import AdminOrReadOnly
 from api.serializers import (RecipeReadSerializer,
                              RecipeCreateSerializer,
@@ -54,7 +54,7 @@ class RecipeViewSet(ModelViewSet):
     # permission_classes = None  # TODO Добавить права доступа
     # filter_backends = None
     # filterset_class = None
-    pagination_class = RecipePagination
+    pagination_class = CustomPagination
 
     def update(self, request: Request, *args, **kwargs):
         if request.method == 'PUT':
