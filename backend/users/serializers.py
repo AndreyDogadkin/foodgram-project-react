@@ -20,7 +20,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = FoodgramUser
-        fields = ('email', 'username', 'first_name',
+        fields = ('id', 'email', 'username', 'first_name',
                   'last_name', 'password')
         extra_kwargs = {
             "email": {"required": True},
@@ -46,7 +46,7 @@ class UserReadSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = FoodgramUser
-        fields = ('email', 'username', 'first_name',
+        fields = ('id', 'email', 'username', 'first_name',
                   'last_name', 'is_subscribed')
 
 
@@ -92,7 +92,8 @@ class FollowSerializer(serializers.ModelSerializer):
             following=follow_obj.following
         ).exists()
 
-    def get_recipes_count(self, follow_obj):
+    @staticmethod
+    def get_recipes_count(follow_obj):
         return Recipe.objects.filter(author=follow_obj.following).count()
 
     def get_recipes(self, follow_obj):

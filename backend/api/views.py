@@ -1,24 +1,27 @@
 from django.http import HttpResponse
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, filters, status
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.generics import get_object_or_404
+from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
 from api.pagination import CustomPagination
-from api.permissions import AdminOrReadOnly
+from api.permissions import IsAuthorOrAdminOrHigherOrReadOnly
 from api.serializers import (RecipeReadSerializer,
                              RecipeCreateSerializer,
                              TagSerializer,
                              IngredientSerializer,
                              FavoritesSerializer,
                              ShoppingListSerializer)
+from api.filters import IngredientNameSearchFilter, CustomRecipeFilter
 from api.services import ShoppingListCreator
 from recipes.models import (Recipe,
                             Tag,
                             Ingredient,
-                            User,
                             Favorites,
                             ShoppingList)
 
@@ -30,7 +33,6 @@ class TagViewSet(viewsets.ReadOnlyModelViewSet):
 
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
-    permission_classes = (AdminOrReadOnly, )
 
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
@@ -40,8 +42,7 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
 
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
-    permission_classes = (AdminOrReadOnly, )
-    filter_backends = (filters.SearchFilter, )
+    filter_backends = [IngredientNameSearchFilter, ]
     search_fields = ('^name',)
 
 
@@ -51,9 +52,10 @@ class RecipeViewSet(ModelViewSet):
     """
 
     queryset = Recipe.objects.all()
-    # permission_classes = None  # TODO Добавить права доступа
-    # filter_backends = None
-    # filterset_class = None
+    permission_classes = [IsAuthorOrAdminOrHigherOrReadOnly,
+                          IsAuthenticatedOrReadOnly]
+    filter_backends = [DjangoFilterBackend, ]
+    filterset_class = CustomRecipeFilter
     pagination_class = CustomPagination
 
     def update(self, request: Request, *args, **kwargs):
@@ -72,62 +74,64 @@ class RecipeViewSet(ModelViewSet):
         return RecipeCreateSerializer
 
     def perform_create(self, serializer: RecipeCreateSerializer):
-        user = User.objects.first()  # TODO Исправить на /user = self.request.user/
+        user = self.request.user
         serializer.is_valid(raise_exception=True)
         serializer.save(author=user)
-
-    def __get_user_recipe_object_exists(self, model, pk):
-        """
-        ...
-        """
-        user = User.objects.first()  # TODO Исправить на /user = self.request.user/
-        recipe: Recipe = get_object_or_404(Recipe, id=pk)
-        object_exists: bool = model.objects.filter(
-            user=user,
-            recipe=recipe
-        ).exists()
-        return user, recipe, object_exists
 
     def __post_extra_action(self, request: Request, model, pk):
         """
         ...
         """
-        user, recipe, object_exists = self.__get_user_recipe_object_exists(
-            model=model,
-            pk=pk
-        )
-        if object_exists:
+        if Recipe.objects.filter(id=pk).exists():
+            user = request.user
+            recipe: Recipe = Recipe.objects.get(id=pk)
+            object_exists: bool = model.objects.filter(
+                user=user,
+                recipe=recipe
+            ).exists()
+            if object_exists:
+                return Response(
+                    {'errors': 'Выбранный рецепт уже добавлен.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save(user=user, recipe=recipe)
             return Response(
-                {'errors': 'Выбранный рецепт уже добавлен.'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save(user=user, recipe=recipe)
+                serializer.data,
+                status=status.HTTP_201_CREATED)
         return Response(
-            serializer.data,
-            status=status.HTTP_201_CREATED)
+            {'errors': 'Выбранный рецепт не существует.'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
-    def __delete_extra_action(self, request: Request, model, pk):
+    @staticmethod
+    def __delete_extra_action(request: Request, model, pk):
         """
         ...
         """
-        user, recipe, object_exists = self.__get_user_recipe_object_exists(
-            model=model,
-            pk=pk
+        if Recipe.objects.filter(id=pk).exists():
+            user = request.user
+            recipe: Recipe = Recipe.objects.get(id=pk)
+            object_exists: bool = model.objects.filter(
+                user=user,
+                recipe=recipe
+            ).exists()
+            if not object_exists:
+                return Response(
+                    data={'errors': 'Выбранный рецепт ранее не был добавлен.'},
+                    status=status.HTTP_400_BAD_REQUEST)
+            model.objects.get(user=user, recipe=recipe).delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(
+            {'errors': 'Выбранный рецепт не существует.'},
+            status=status.HTTP_400_BAD_REQUEST
         )
-        if not object_exists:
-            return Response(
-                data={'errors': 'Выбранный рецепт ранее не был добавлен.'},
-                status=status.HTTP_400_BAD_REQUEST)
-
-        model.objects.get(user=user, recipe=recipe).delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(
         detail=True,
         methods=['post'],
-        # permission_classes = [],  # TODO Добавить права доступа
+        permission_classes=[IsAuthenticated, ]
     )
     def favorite(self, request: Request, pk: int):
         return self.__post_extra_action(
@@ -147,7 +151,7 @@ class RecipeViewSet(ModelViewSet):
     @action(
         detail=True,
         methods=['post'],
-        # permission_classes = [],  # TODO Добавить права доступа
+        permission_classes=[IsAuthenticated, ]
     )
     def shopping_cart(self, request: Request, pk: int):
         return self.__post_extra_action(
@@ -167,13 +171,13 @@ class RecipeViewSet(ModelViewSet):
     @action(
         detail=False,
         methods=['get'],
-        # permission_classes = [],  # TODO Добавить права доступа
+        permission_classes=[IsAuthenticated, ]
     )
     def download_shopping_cart(self, request: Request):
         """
         ...
         """
-        user = User.objects.first()  # TODO Исправить на /user = self.request.user/
+        user = request.user
         if user.shop_list.exists():
             shopping_list = ShoppingListCreator(
                 user=user
