@@ -20,7 +20,7 @@ class UserViewSet(viewsets.GenericViewSet,
                   mixins.ListModelMixin,
                   mixins.CreateModelMixin):
     queryset = FoodgramUser.objects.all()
-    permission_classes = [IsRequestUserOrAdminOrHigherOrReadonly, ]  # TODO Добавить свой пермишн
+    permission_classes = [IsRequestUserOrAdminOrHigherOrReadonly, ]
     pagination_class = CustomPagination
     serializer_class = UserCreateSerializer
 
