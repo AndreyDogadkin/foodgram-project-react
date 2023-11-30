@@ -8,6 +8,10 @@ class FoodgramUser(AbstractUser):
         ('user', 'user'),
         ('admin', 'admin'),
     )
+    email = models.EmailField(
+        unique=True,
+        verbose_name='Электронная почта'
+    )
     role = models.CharField(
         choices=ROLE_CHOICES,
         default='user',

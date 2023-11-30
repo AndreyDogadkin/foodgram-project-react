@@ -2,12 +2,17 @@ from djoser.serializers import SetPasswordSerializer
 from rest_framework import viewsets, mixins, status
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 
 from api.pagination import CustomPagination
+from api.permissions import IsRequestUserOrAdminOrHigherOrReadonly
 from users.models import FoodgramUser, Follow
-from users.serializers import UserCreateSerializer, UserReadSerializer, FollowSerializer
+from users.serializers import (UserCreateSerializer,
+                               UserReadSerializer,
+                               FollowSerializer
+                               )
 
 
 class UserViewSet(viewsets.GenericViewSet,
@@ -15,7 +20,7 @@ class UserViewSet(viewsets.GenericViewSet,
                   mixins.ListModelMixin,
                   mixins.CreateModelMixin):
     queryset = FoodgramUser.objects.all()
-    permission_classes = []
+    permission_classes = [IsRequestUserOrAdminOrHigherOrReadonly, ]  # TODO Добавить свой пермишн
     pagination_class = CustomPagination
     serializer_class = UserCreateSerializer
 
@@ -31,7 +36,7 @@ class UserViewSet(viewsets.GenericViewSet,
     @action(
         detail=False,
         methods=['post'],
-        permission_classes=[]  # TODO Добавить права доступа
+        permission_classes=[IsAuthenticated, ]
     )
     def set_password(self, request: Request):
         serializer = self.get_serializer(data=request.data)
@@ -43,7 +48,7 @@ class UserViewSet(viewsets.GenericViewSet,
     @action(
         detail=False,
         methods=['get'],
-        permission_classes=[]  # TODO Добавить права доступа
+        permission_classes=[IsAuthenticated, ]
     )
     def me(self, request: Request):
         serializer = self.get_serializer(request.user)
@@ -52,7 +57,7 @@ class UserViewSet(viewsets.GenericViewSet,
     @action(
         detail=False,
         methods=['get'],
-        permission_classes=[]  # TODO Добавить права доступа
+        permission_classes=[IsAuthenticated, ]
     )
     def subscriptions(self, request: Request):
         follows = Follow.objects.filter(user=self.request.user)
@@ -66,7 +71,7 @@ class UserViewSet(viewsets.GenericViewSet,
     @action(
         detail=True,
         methods=['post'],
-        permission_classes=[]  # TODO Добавить права доступа
+        permission_classes=[IsAuthenticated, ]
     )
     def subscribe(self, request: Request, pk: int):
         user = request.user
