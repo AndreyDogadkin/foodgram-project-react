@@ -1,14 +1,14 @@
 from django.http import HttpResponse
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import viewsets, filters, status
+from rest_framework import viewsets, status
 from rest_framework.decorators import action
-from rest_framework.exceptions import ValidationError
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
+from api.filters import IngredientNameSearchFilter, CustomRecipeFilter
 from api.pagination import CustomPagination
 from api.permissions import IsAuthorOrAdminOrHigherOrReadOnly
 from api.serializers import (RecipeReadSerializer,
@@ -17,7 +17,6 @@ from api.serializers import (RecipeReadSerializer,
                              IngredientSerializer,
                              FavoritesSerializer,
                              ShoppingListSerializer)
-from api.filters import IngredientNameSearchFilter, CustomRecipeFilter
 from api.services import ShoppingListCreator
 from recipes.models import (Recipe,
                             Tag,
@@ -110,23 +109,18 @@ class RecipeViewSet(ModelViewSet):
         """
         ...
         """
-        if Recipe.objects.filter(id=pk).exists():
-            user = request.user
-            recipe: Recipe = Recipe.objects.get(id=pk)
-            object_exists: bool = model.objects.filter(
-                user=user,
-                recipe=recipe
-            ).exists()
-            if not object_exists:
-                return Response(
-                    data={'errors': 'Выбранный рецепт ранее не был добавлен.'},
-                    status=status.HTTP_400_BAD_REQUEST)
-            model.objects.get(user=user, recipe=recipe).delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        return Response(
-            {'errors': 'Выбранный рецепт не существует.'},
-            status=status.HTTP_400_BAD_REQUEST
-        )
+        user = request.user
+        recipe: Recipe = get_object_or_404(Recipe, id=pk)
+        object_exists: bool = model.objects.filter(
+            user=user,
+            recipe=recipe
+        ).exists()
+        if not object_exists:
+            return Response(
+                data={'errors': 'Выбранный рецепт ранее не был добавлен.'},
+                status=status.HTTP_400_BAD_REQUEST)
+        model.objects.get(user=user, recipe=recipe).delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(
         detail=True,

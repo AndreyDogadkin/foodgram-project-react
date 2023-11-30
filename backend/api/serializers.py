@@ -136,10 +136,19 @@ class RecipeCreateSerializer(RecipeReadSerializer):
         required=True
     )
 
+    def validate_name(self, name):
+        user = self.context.get('request').user
+        if Recipe.objects.filter(author=user, name=name).exists():
+            raise serializers.ValidationError(
+                f'У вас уже есть рецепт с именем {name}.')
+        return name
+
     @staticmethod
     def validate_tags(tags):
         if not tags:
             raise serializers.ValidationError('Обязательное поле.')
+        if len(set(tags)) != len(tags):
+            raise serializers.ValidationError('Теги повторятся.')
         return tags
 
     @staticmethod
@@ -148,10 +157,15 @@ class RecipeCreateSerializer(RecipeReadSerializer):
             raise serializers.ValidationError('Обязательное поле.')
         validate_ingredients = []
         for ingredient in ingredients:
-            if ingredient['id'] in validate_ingredients:
-                raise serializers.ValidationError('Ингредиенты повторяются.')
+            ingredient_id = ingredient.get('id')
+            ingredient_amount = ingredient.get('amount')
+            if ingredient_id and ingredient_amount:
+                if ingredient_id in validate_ingredients:
+                    raise serializers.ValidationError('Ингредиенты повторяются.')
+                else:
+                    validate_ingredients.append(ingredient_id)
             else:
-                validate_ingredients.append(ingredient['id'])
+                raise serializers.ValidationError('Не указаны ингредиенты.')
         return ingredients
 
     def create(self, validated_data):
@@ -168,12 +182,14 @@ class RecipeCreateSerializer(RecipeReadSerializer):
         return recipe
 
     def update(self, instance: Recipe, validated_data: dict):
-        if validated_data.get('tags'):
-            tags = validated_data.pop('tags')
+        tags = validated_data.pop('tags', None)
+        ingredients = validated_data.pop('ingredients', None)
+        if tags:
             instance.tags.clear()
             instance.tags.set(tags)
-        if validated_data.get('ingredients'):
-            ingredients = validated_data.pop('ingredients')
+        else:
+            raise serializers.ValidationError({'tags': 'Не указаны.'})
+        if ingredients:
             instance.ingredients.clear()
             for ingredient in ingredients:
                 RecipeIngredient.objects.update_or_create(
@@ -181,6 +197,8 @@ class RecipeCreateSerializer(RecipeReadSerializer):
                     ingredient=ingredient['id'],
                     amount=ingredient['amount']
                 )
+        else:
+            raise serializers.ValidationError({'ingredients': 'Не указаны.'})
         return super().update(instance, validated_data)
 
     def to_representation(self, instance: Recipe):
