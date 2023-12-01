@@ -3,6 +3,12 @@ from django.db import models
 
 
 class FoodgramUser(AbstractUser):
+    """
+    Модель пользователя.
+    Поле email переопределено для установки уникальности электронных
+    почт пользователей.
+    Дополнительное поле role - Выбор пользователь или администратор.
+    """
 
     ROLE_CHOICES = (
         ('user', 'user'),
@@ -28,6 +34,15 @@ class FoodgramUser(AbstractUser):
 
 
 class Follow(models.Model):
+    """
+    Модель подписок.
+    Связи:
+        - user -- Foreign Key c моделью FoodgramUser.
+        - following -- Foreign Key c моделью FoodgramUser.
+    Ограничения:
+        - Нельзя подписаться на одного пользователя несколько раз.
+    """
+
     user = models.ForeignKey(
         to=FoodgramUser,
         verbose_name='Пользователь',

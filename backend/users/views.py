@@ -14,6 +14,7 @@ from users.serializers import (UserCreateSerializer,
                                UserReadSerializer,
                                FollowSerializer
                                )
+
 User = get_user_model()
 
 
@@ -21,6 +22,29 @@ class UserViewSet(viewsets.GenericViewSet,
                   mixins.RetrieveModelMixin,
                   mixins.ListModelMixin,
                   mixins.CreateModelMixin):
+    """
+    Вьюсет для представления и создания пользователей.
+    Права доступа:
+        - Просмотр объектов доступен всем пользователям
+        - Просмотр конкретного объекта доступен только авторизованным пользователям
+        - Создание объектов доступно только авторизованным пользователям
+        - Редактирование объектов доступно только авторам или пользователям
+        со статусом персонала.
+    Доступные методы:
+        - GET -- Представление списка пользователей.
+        - POST -- Создание пользователя.
+        - GET -- Представление пользователя по id.
+        - POST -- Изменение пароля.
+    Доступные actions:
+        - GET -- Представление текущего пользователя.
+        - GET -- Представление всех подписок пользователя.
+        - POST -- Подписаться на пользователя
+        - DELETE -- Отписаться от пользователя
+    Пагинация:
+        - page=<int> - Номер страницы
+        - limit=<int> - Количество объектов на странице(по умолчанию 6)
+    """
+
     queryset = User.objects.all()
     permission_classes = [IsRequestUserOrAdminOrHigherOrReadonly, ]
     pagination_class = CustomPagination
@@ -41,6 +65,7 @@ class UserViewSet(viewsets.GenericViewSet,
         permission_classes=[IsAuthenticated, ]
     )
     def set_password(self, request: Request):
+        """Изменить пароль пользователя."""
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         self.request.user.set_password(serializer.data['new_password'])
@@ -53,6 +78,7 @@ class UserViewSet(viewsets.GenericViewSet,
         permission_classes=[IsAuthenticated, ]
     )
     def me(self, request: Request):
+        """Представление текущего пользователя."""
         serializer = self.get_serializer(request.user)
         return Response(serializer.data)
 
@@ -62,6 +88,7 @@ class UserViewSet(viewsets.GenericViewSet,
         permission_classes=[IsAuthenticated, ]
     )
     def subscriptions(self, request: Request):
+        """Представление всех подписок пользователя."""
         follows = Follow.objects.filter(user=self.request.user)
         pages = self.paginate_queryset(follows)
         serializer = self.get_serializer(
@@ -76,6 +103,7 @@ class UserViewSet(viewsets.GenericViewSet,
         permission_classes=[IsAuthenticated, ]
     )
     def subscribe(self, request: Request, pk: int):
+        """Подписаться на пользователя."""
         user = request.user
         following = get_object_or_404(User, id=pk)
         serializer = self.get_serializer(data=request.data)
@@ -89,6 +117,7 @@ class UserViewSet(viewsets.GenericViewSet,
 
     @subscribe.mapping.delete
     def delete_subscribe(self, request: Request, pk: int):
+        """Отписаться от пользователя"""
         user = request.user
         following = get_object_or_404(User, id=pk)
         if Follow.objects.filter(following=following, user=user).exists():

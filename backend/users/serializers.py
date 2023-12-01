@@ -9,6 +9,7 @@ User = get_user_model()
 
 
 class UserCreateSerializer(serializers.ModelSerializer):
+    """Создание пользователей."""
 
     @staticmethod
     def validate_username(username):
@@ -35,6 +36,10 @@ class UserCreateSerializer(serializers.ModelSerializer):
 
 
 class UserReadSerializer(serializers.ModelSerializer):
+    """
+    Представление пользователей.
+    Поле is_subscribed получено с помощью дополнительного метода.
+    """
 
     is_subscribed = serializers.SerializerMethodField(read_only=True)
 
@@ -54,6 +59,10 @@ class UserReadSerializer(serializers.ModelSerializer):
 
 
 class FollowRecipeSerializer(serializers.ModelSerializer):
+    """
+    Представление рецепта в сокращенном варианте.
+    Используется в представлении подписок пользователя.
+    """
 
     class Meta:
         model = Recipe
@@ -61,6 +70,7 @@ class FollowRecipeSerializer(serializers.ModelSerializer):
 
 
 class FollowSerializer(serializers.ModelSerializer):
+    """Представление подписок пользователя."""
 
     email = serializers.EmailField(
         source='following.email',
