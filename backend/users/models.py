@@ -15,11 +15,9 @@ class FoodgramUser(AbstractUser):
     role = models.CharField(
         choices=ROLE_CHOICES,
         default='user',
-        max_length=8
+        max_length=8,
+        verbose_name='Роль'
     )
-
-    def is_admin(self):
-        return self.role == 'admin'
 
     def __str__(self):
         return self.username

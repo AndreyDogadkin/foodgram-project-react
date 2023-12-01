@@ -1,3 +1,4 @@
+from django.contrib.auth import get_user_model
 from djoser.serializers import SetPasswordSerializer
 from rest_framework import viewsets, mixins, status
 from rest_framework.decorators import action
@@ -8,18 +9,19 @@ from rest_framework.response import Response
 
 from api.pagination import CustomPagination
 from api.permissions import IsRequestUserOrAdminOrHigherOrReadonly
-from users.models import FoodgramUser, Follow
+from users.models import Follow
 from users.serializers import (UserCreateSerializer,
                                UserReadSerializer,
                                FollowSerializer
                                )
+User = get_user_model()
 
 
 class UserViewSet(viewsets.GenericViewSet,
                   mixins.RetrieveModelMixin,
                   mixins.ListModelMixin,
                   mixins.CreateModelMixin):
-    queryset = FoodgramUser.objects.all()
+    queryset = User.objects.all()
     permission_classes = [IsRequestUserOrAdminOrHigherOrReadonly, ]
     pagination_class = CustomPagination
     serializer_class = UserCreateSerializer
@@ -75,7 +77,7 @@ class UserViewSet(viewsets.GenericViewSet,
     )
     def subscribe(self, request: Request, pk: int):
         user = request.user
-        following = get_object_or_404(FoodgramUser, id=pk)
+        following = get_object_or_404(User, id=pk)
         serializer = self.get_serializer(data=request.data)
         serializer.context['following'] = following
         serializer.is_valid(raise_exception=True)
@@ -88,7 +90,7 @@ class UserViewSet(viewsets.GenericViewSet,
     @subscribe.mapping.delete
     def delete_subscribe(self, request: Request, pk: int):
         user = request.user
-        following = get_object_or_404(FoodgramUser, id=pk)
+        following = get_object_or_404(User, id=pk)
         if Follow.objects.filter(following=following, user=user).exists():
             Follow.objects.get(following=following, user=user).delete()
             return Response(status=status.HTTP_204_NO_CONTENT)

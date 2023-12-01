@@ -174,7 +174,7 @@ class Favorites(models.Model):
     )
 
     def __str__(self):
-        return f'{self.recipe.name} - {self.user.name}'
+        return f'{self.recipe.name} -- {self.user.username}'
 
     class Meta:
         constraints = (
@@ -208,7 +208,7 @@ class ShoppingList(models.Model):
     )
 
     def __str__(self):
-        return f'{self.recipe.name} - {self.user.name}'
+        return f'{self.recipe.name} -- {self.user.username}'
 
     class Meta:
         constraints = (
