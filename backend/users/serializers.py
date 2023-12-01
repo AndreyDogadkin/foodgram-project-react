@@ -1,8 +1,11 @@
+from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from recipes.models import Recipe
-from users.models import FoodgramUser, Follow
+from users.models import Follow
+
+User = get_user_model()
 
 
 class UserCreateSerializer(serializers.ModelSerializer):
@@ -16,10 +19,10 @@ class UserCreateSerializer(serializers.ModelSerializer):
         return username
 
     def create(self, validated_data):
-        return FoodgramUser.objects.create_user(**validated_data)
+        return User.objects.create_user(**validated_data)
 
     class Meta:
-        model = FoodgramUser
+        model = User
         fields = ('id', 'email', 'username', 'first_name',
                   'last_name', 'password')
         extra_kwargs = {
@@ -45,7 +48,7 @@ class UserReadSerializer(serializers.ModelSerializer):
         return False
 
     class Meta:
-        model = FoodgramUser
+        model = User
         fields = ('id', 'email', 'username', 'first_name',
                   'last_name', 'is_subscribed')
 
