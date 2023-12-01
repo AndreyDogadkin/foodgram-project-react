@@ -6,13 +6,22 @@ from recipes.models import RecipeIngredient
 
 class ShoppingListCreator:
     """
-    ...
-    """
+    Создание списка покупок.
+    Пример:
+        Список покупок для @<username>.
+
+        ◻︎ бараний окорок на косточке --------- 10 кусок
+        ◻︎ масло грецкого ореха --------------- 50 ч. л.
+        ◻︎ персики консервированные ----------- 10 г
+        """
 
     def __init__(self, user):
         self.user = user
 
     def __get_data(self):
+        """
+        Получение ингредиентов и суммирование количества дублей.
+        """
         shopping_list_data = RecipeIngredient.objects.filter(
             recipe__shop_list__user=self.user
         ).values(
@@ -27,6 +36,9 @@ class ShoppingListCreator:
         return shopping_list_data
 
     def create_shopping_list(self):
+        """
+        Создание списка покупок.
+        """
         data = self.__get_data()
         separator = '-'
         base_len_separator = 35

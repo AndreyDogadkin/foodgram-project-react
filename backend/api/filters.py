@@ -1,13 +1,24 @@
 from django_filters.rest_framework import FilterSet, filters
 from rest_framework.filters import SearchFilter
+
 from recipes.models import Recipe
 
 
 class IngredientNameSearchFilter(SearchFilter):
-    search_param = 'name'
+    """Фильтр поиска по имени ингредиента."""
+    search_param = '^name'
 
 
 class CustomRecipeFilter(FilterSet):
+    """
+    Фильтр поиска рецептов.
+    Параметры фильтрации:
+    - is_favorited=<0 или 1> -- 1 Только рецепты добавленные в избранное
+    - is_in_shopping_cart=<0 или 1> -- Только рецепты в списке покупок
+    - author=<id> -- Только рецепты выбранного автора
+    - tags=<slug> -- Только рецепты с выбранными тегами
+        Пример: tags=lunch&tags=breakfast
+    """
     author = filters.NumberFilter(field_name='author__id')
     tags = filters.AllValuesMultipleFilter(field_name='tags__slug')
     is_favorited = filters.NumberFilter(
