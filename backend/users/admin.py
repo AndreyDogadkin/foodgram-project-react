@@ -8,12 +8,19 @@ User = get_user_model()
 
 
 class BaseFoodrgramUserAdmin(admin.ModelAdmin):
+    """Базовая админ-модель с пагинацией."""
+
     list_per_page = 50
     list_max_show_all = 100
 
 
 @admin.register(User)
 class FoodgramUserAdmin(BaseFoodrgramUserAdmin):
+    """
+    Преставление, создание, редактирование и удаление пользователей.
+    Поля is_admin, followers_count, recipes_count получены с помощью
+    дополнительных методов.
+    """
     fields = (('username', 'email'), ('first_name', 'last_name'),
               'password', 'role',
               ('is_superuser', 'is_staff'),
@@ -28,29 +35,38 @@ class FoodgramUserAdmin(BaseFoodrgramUserAdmin):
     list_max_show_all = 100
     readonly_fields = ('date_joined',)
 
+    @admin.display(description='Статус администратора',
+                   boolean=True)
     def is_admin(self, user: FoodgramUser):
+        """Булево значение является ли пользователь администратором."""
         return user.role == 'admin'
 
     @admin.display(description='Подписчиков')
     def followers_count(self, user: FoodgramUser):
+        """Счетчик подписчиков пользователя."""
         return user.following.count()
 
     @admin.display(description='Рецептов')
     def recipes_count(self, user: FoodgramUser):
+        """Счетчик рецептов пользователя."""
         return Recipe.objects.filter(author=user).count()
 
     def save_model(self, request, obj: FoodgramUser, form, change):
+        """
+        Создание пользователя.
+        Метод переопределен для хеширования пароля и
+        автоматической установки статуса персонала,
+        если роль пользователя - администратор.
+        """
         if obj.role == 'admin':
             obj.is_staff = True
         obj.set_password(obj.password)
         obj.save()
 
-    is_admin.short_description = 'Статус администратора'
-    is_admin.boolean = True
-
 
 @admin.register(Follow)
 class FollowAdmin(BaseFoodrgramUserAdmin):
+    """Преставление, создание, редактирование и удаление подписок."""
     fields = (('user', 'following'),)
     list_display = ('id', '__str__', 'user', 'following',
                     'added_date')
