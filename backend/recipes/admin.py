@@ -27,19 +27,22 @@ class RecipeFoodrgramRecipeAdmin(BaseFoodrgramRecipeAdmin):
               'text',
               'tags',
               ('image', 'cooking_time'))
-    list_display = ('id', 'name', 'author',
+    list_display = ('id', 'name', 'author', 'ingredients_in_recipe',
                     'favorite_count', 'pub_date')
-    list_filter = ('name', 'author', 'tags')
+    list_filter = ('author', 'tags')
     list_display_links = ('name', 'id')
     date_hierarchy = 'pub_date'
     inlines = (InlineIngredients, )
     filter_horizontal = ('tags',)
     search_fields = ('name', 'id', 'author__username')
 
-    def favorite_count(self, recipe):
-        return recipe.favorites.all().count()
+    @admin.display(description='Добавлений в избранное')
+    def favorite_count(self, recipe: Recipe):
+        return recipe.favorites.count()
 
-    favorite_count.short_description = 'Кол-во добавлений в избранное'
+    @admin.display(description='Ингредиенты')
+    def ingredients_in_recipe(self, recipe: Recipe):
+        return list(recipe.ingredients.only('name'))
 
 
 @admin.register(Tag)

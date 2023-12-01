@@ -1,6 +1,5 @@
 import base64
 
-import webcolors
 from django.core.files.base import ContentFile
 from rest_framework import serializers
 
@@ -16,6 +15,7 @@ from users.serializers import UserReadSerializer
 class Base64ImageField(serializers.ImageField):
     """
     Поле обработки изображений для сериализатора создания рецептов.
+    Преобразует изображение в base64.
     """
     def to_internal_value(self, data):
         if isinstance(data, str) and data.startswith('data:image'):
@@ -28,17 +28,7 @@ class Base64ImageField(serializers.ImageField):
 
 
 class TagSerializer(serializers.ModelSerializer):
-    """
-    Сериализатор представления тегов.
-    """
-
-    @staticmethod
-    def validate_color(value):
-        try:
-            webcolors.normalize_hex(value)
-            return value
-        except ValueError as e:
-            raise serializers.ValidationError(e)
+    """Представление тегов."""
 
     class Meta:
         model = Tag
@@ -46,9 +36,7 @@ class TagSerializer(serializers.ModelSerializer):
 
 
 class IngredientSerializer(serializers.ModelSerializer):
-    """
-    Сериализатор представления ингредиентов.
-    """
+    """Представление ингредиентов."""
 
     class Meta:
         model = Ingredient
@@ -75,7 +63,9 @@ class RecipeIngredientReadSerializer(serializers.ModelSerializer):
 
 class RecipeReadSerializer(serializers.ModelSerializer):
     """
-    Сериализатор представления рецептов.
+    Представление рецептов.
+    Поля is_favorited и is_in_shopping_cart получены с помощью
+    дополнительных методов.
     """
 
     tags = TagSerializer(many=True, read_only=True)
@@ -122,9 +112,7 @@ class RecipeIngredientCreateSerializer(serializers.ModelSerializer):
 
 
 class RecipeCreateSerializer(RecipeReadSerializer):
-    """
-    Сериализатор для создания и редактирования рецептов.
-    """
+    """Создание и редактирование рецептов."""
 
     image = Base64ImageField(required=True)
     tags = serializers.PrimaryKeyRelatedField(
@@ -213,6 +201,7 @@ class RecipeCreateSerializer(RecipeReadSerializer):
 
 
 class FavoritesSerializer(serializers.ModelSerializer):
+    """Добавление в избранное репрезентации рецептов."""
 
     id = serializers.PrimaryKeyRelatedField(
         source='recipe',
@@ -236,6 +225,7 @@ class FavoritesSerializer(serializers.ModelSerializer):
 
 
 class ShoppingListSerializer(FavoritesSerializer):
+    """Добавления в список покупок репрезентации рецептов."""
 
     class Meta:
         model = ShoppingList

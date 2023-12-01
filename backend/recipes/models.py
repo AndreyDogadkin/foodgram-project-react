@@ -2,11 +2,24 @@ from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 
+from recipes.validators import validate_hex_color
+
 User = get_user_model()
 
 
 class Recipe(models.Model):
-    """Модель рецептов."""
+    """
+    Модель рецептов.
+    Связи:
+        - ingredients --  M2M с моделью Ingredient
+            Вспомогательная модель RecipeIngredient
+            с указанием количества ингредиентов.
+        - tags -- M2M c моделью Tag.
+        - author -- Foreign Key с моделью User
+    Ограничения:
+        - Автор не может создавать рецепты с одинаковыми именами.
+        - Время приготовления ограничено минимальным и максимальными значениями
+    """
 
     name = models.CharField(
         max_length=200,
@@ -65,7 +78,13 @@ class Recipe(models.Model):
 
 
 class Tag(models.Model):
-    """Модель тегов."""
+    """
+    Модель тегов.
+    Ограничения:
+        - slug должен быть уникальным.
+        - color должен быть предоставлен в формате hex.
+            Пример: #0d326e
+    """
 
     name = models.CharField(
         max_length=16,
@@ -75,7 +94,8 @@ class Tag(models.Model):
     color = models.CharField(
         max_length=16,
         verbose_name='Цветовой код',
-        unique=True
+        unique=True,
+        validators=[validate_hex_color]
     )
     slug = models.SlugField(
         max_length=50,
@@ -92,7 +112,11 @@ class Tag(models.Model):
 
 
 class Ingredient(models.Model):
-    """Модель ингредиентов и их единиц измерения."""
+    """
+    Модель ингредиентов.
+    Ограничения:
+        - Ингредиенты и их ед. измерения не должны повторяться.
+    """
 
     name = models.CharField(
         max_length=200,
@@ -118,7 +142,14 @@ class Ingredient(models.Model):
 
 
 class RecipeIngredient(models.Model):
-    """Вспомогательная модель для связи рецептов и ингредиентов с их количеством."""
+    """
+    Вспомогательная модель для связи рецептов и ингредиентов.
+    Связи:
+        - recipe -- Foreign Key c моделью Recipe.
+        - ingredient -- Foreign Key c моделью Ingredient.
+    Ограничения:
+        - Количество ограничено минимальным и максимальным значением.
+    """
 
     recipe = models.ForeignKey(
         Recipe,
@@ -138,7 +169,7 @@ class RecipeIngredient(models.Model):
                               message='Минимальное значение "1".'),
             MaxValueValidator(limit_value=100000,
                               message='Слишком большое значение.')],  # TODO Вынести константы
-        default=0,
+        default=1,
         verbose_name='Количество'
     )
 
@@ -154,6 +185,14 @@ class RecipeIngredient(models.Model):
 
 
 class Favorites(models.Model):
+    """
+    Модель избранных рецептов.
+    Связи:
+        - recipe -- Foreign Key c моделью Recipe.
+        - user -- Foreign Key c моделью User.
+    Ограничения:
+        - Рецепты пользователя в избранном не должны повторяться.
+    """
 
     recipe = models.ForeignKey(
         to=Recipe,
@@ -188,6 +227,14 @@ class Favorites(models.Model):
 
 
 class ShoppingList(models.Model):
+    """
+        Модель списка покупок.
+        Связи:
+            - recipe -- Foreign Key c моделью Recipe.
+            - user -- Foreign Key c моделью User.
+        Ограничения:
+            - Рецепты пользователя в списке покупок не должны повторяться.
+        """
 
     recipe = models.ForeignKey(
         to=Recipe,

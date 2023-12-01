@@ -27,7 +27,10 @@ from recipes.models import (Recipe,
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
     """
-    ...
+    Вьюсет для представления ингредиентов.
+    Методы:
+    - GET -- Представление списка тегов.
+    - GET -- Представление тега по id.
     """
 
     queryset = Tag.objects.all()
@@ -36,7 +39,11 @@ class TagViewSet(viewsets.ReadOnlyModelViewSet):
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     """
-    ...
+    Вьюсет для представления ингредиентов.
+    Методы:
+    - GET -- Представление списка ингредиентов.
+    - GET -- Представление ингредиента по id.
+    Доступен поиск по частичному вхождению в название ингредиента.
     """
 
     queryset = Ingredient.objects.all()
@@ -47,7 +54,32 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
 
 class RecipeViewSet(ModelViewSet):
     """
-    ...
+    Вьюсет для представления, создания, редактирования и удаления рецептов.
+    Права доступа:
+    - Только авторизованные пользователи
+    - Редактирование объектов доступно только авторам или пользователям
+    со статусом персонала.
+    Доступные методы:
+    - GET -- Представление списка рецептов.
+    - GET -- Представление рецепта по id.
+    - POST -- Создание рецепта.
+    - PATCH -- Редактирование рецепта.
+    - DELETE -- Удаление рецепта.
+    Доступные actions:
+    - POST -- Добавление рецепта в избранное.
+    - DELETE -- Удаление рецепта из избранного.
+    - POST -- Добавление рецепта в список покупок.
+    - DELETE -- Удаление рецепта из списка покупок.
+    - GET -- Получить список покупок в формате .txt.
+    Параметры фильтрации:
+    - is_favorited=<0 или 1> -- 1 Только рецепты добавленные в избранное
+    - is_in_shopping_cart=<0 или 1> -- Только рецепты в списке покупок
+    - author=<id> -- Только рецепты выбранного автора
+    - tags=<slug> -- Только рецепты с выбранными тегами
+        Пример: tags=lunch&tags=breakfast
+    Пагинация:
+    - page=<int> - Номер страницы
+    - limit=<int> - Количество объектов на странице(по умолчанию 6)
     """
 
     queryset = Recipe.objects.all()
@@ -77,9 +109,12 @@ class RecipeViewSet(ModelViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save(author=user)
 
-    def __post_extra_action(self, request: Request, model, pk):
+    def __post_extra_action(self, request: Request, model, pk: int):
         """
-        ...
+        Добавление рецепта в список покупок/избранное.
+        Ограничения:
+        - Невозможно добавить рецепт, который не существует.
+        - Невозможно добавить уже добавленный рецепт.
         """
         if Recipe.objects.filter(id=pk).exists():
             user = request.user
@@ -105,9 +140,12 @@ class RecipeViewSet(ModelViewSet):
         )
 
     @staticmethod
-    def __delete_extra_action(request: Request, model, pk):
+    def __delete_extra_action(request: Request, model, pk: int):
         """
-        ...
+        Удаление рецепта из списка покупок/избранного.
+        Ограничения:
+        - Невозможно удалить рецепт, который не существует.
+        - Невозможно удалить рецепт, который не добавлен.
         """
         user = request.user
         recipe: Recipe = get_object_or_404(Recipe, id=pk)
@@ -128,6 +166,10 @@ class RecipeViewSet(ModelViewSet):
         permission_classes=[IsAuthenticated, ]
     )
     def favorite(self, request: Request, pk: int):
+        """
+        Добавить рецепт в избранное.
+        Доступно только авторизованным пользователям.
+        """
         return self.__post_extra_action(
             request=request,
             model=Favorites,
@@ -136,6 +178,10 @@ class RecipeViewSet(ModelViewSet):
 
     @favorite.mapping.delete
     def delete_favorite(self, request: Request, pk: int):
+        """
+        Удалить рецепт из избранного.
+        Доступно только авторизованным пользователям.
+        """
         return self.__delete_extra_action(
             request=request,
             model=Favorites,
@@ -148,6 +194,10 @@ class RecipeViewSet(ModelViewSet):
         permission_classes=[IsAuthenticated, ]
     )
     def shopping_cart(self, request: Request, pk: int):
+        """
+        Добавить рецепт в список покупок.
+        Доступно только авторизованным пользователям.
+        """
         return self.__post_extra_action(
             request=request,
             model=ShoppingList,
@@ -156,6 +206,10 @@ class RecipeViewSet(ModelViewSet):
 
     @shopping_cart.mapping.delete
     def delete_shopping_cart(self, request: Request, pk: int):
+        """
+        Удалить рецепт из списка покупок.
+        Доступно только авторизованным пользователям.
+        """
         return self.__delete_extra_action(
             request=request,
             model=ShoppingList,
@@ -169,7 +223,16 @@ class RecipeViewSet(ModelViewSet):
     )
     def download_shopping_cart(self, request: Request):
         """
-        ...
+        Получить список покупок в формате .txt.
+        Доступно только авторизованным пользователям.
+        При создании списка повторяющиеся ингредиенты складываются.
+        Пример:
+            - Рецепт 1:
+                - Персики 3 шт.
+            - Рецепт 2:
+                - Персики 2 шт.
+            Список покупок:
+                - Персики - 5 шт.
         """
         user = request.user
         if user.shop_list.exists():
