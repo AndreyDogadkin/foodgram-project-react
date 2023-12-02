@@ -5,8 +5,8 @@ from rest_framework.request import Request
 class IsAuthorOrAdminOrHigherOrReadOnly(permissions.BasePermission):
     """
     Права доступа на изменение объекта имеют:
-    - Автор
-    - Администратор или выше
+        - Автор
+        - Администратор или выше
     """
 
     def has_object_permission(self, request: Request, view, obj):
@@ -18,8 +18,8 @@ class IsAuthorOrAdminOrHigherOrReadOnly(permissions.BasePermission):
 class IsRequestUserOrAdminOrHigherOrReadonly(permissions.BasePermission):
     """
         Права доступа на изменение объекта пользователя имеют:
-        - Пользователь
-        - Администратор или выше
+            - Пользователь
+            - Администратор или выше
         """
     def has_object_permission(self, request: Request, view, obj):
         return (request.method in permissions.SAFE_METHODS
