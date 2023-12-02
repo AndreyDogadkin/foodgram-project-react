@@ -41,7 +41,7 @@ class Recipe(models.Model):
             MinValueValidator(limit_value=1,
                               message='Минимальное значение "1".'),
             MaxValueValidator(limit_value=2880,
-                              message='Слишком большое значение.')  # TODO Вынести константы
+                              message='Слишком большое значение.')
         ],
         verbose_name='Время приготовления'
     )
@@ -167,8 +167,8 @@ class RecipeIngredient(models.Model):
         validators=[
             MinValueValidator(limit_value=1,
                               message='Минимальное значение "1".'),
-            MaxValueValidator(limit_value=100000,
-                              message='Слишком большое значение.')],  # TODO Вынести константы
+            MaxValueValidator(limit_value=10000,
+                              message='Слишком большое значение.')],
         default=1,
         verbose_name='Количество'
     )
