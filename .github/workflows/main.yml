@@ -1,11 +1,12 @@
 name: Main Foodgram workflow
 
 on:
-    push:
-      branches:
-        - main
+  pull_request:
+    types:
+      - closed
 jobs:
     backend_tests:
+      if: github.event.pull_request.merged == true
       runs-on: ubuntu-latest
       services:
         postgres:
