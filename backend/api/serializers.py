@@ -149,7 +149,9 @@ class RecipeCreateSerializer(RecipeReadSerializer):
             ingredient_amount = ingredient.get('amount')
             if ingredient_id and ingredient_amount:
                 if ingredient_id in validate_ingredients:
-                    raise serializers.ValidationError('Ингредиенты повторяются.')
+                    raise serializers.ValidationError(
+                        'Ингредиенты повторяются.'
+                    )
                 else:
                     validate_ingredients.append(ingredient_id)
             else:
