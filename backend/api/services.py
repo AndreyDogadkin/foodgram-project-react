@@ -46,7 +46,7 @@ class ShoppingListCreator:
         shop_list += f'Список покупок для @{self.user.username}.\n\n'
         for item in data:
             item_len_separator = (
-                    base_len_separator - len(item["ingredient__name"])
+                base_len_separator - len(item["ingredient__name"])
             )
             shop_list += (
                 f'◻︎ {item["ingredient__name"]} '
