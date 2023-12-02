@@ -9,7 +9,8 @@ from recipes.models import Ingredient, Tag
 
 class Command(BaseCommand):
 
-    MODEL_PATH = ((Ingredient, 'data/ingredients.csv'), (Tag, 'data/tags.csv'))
+    MODEL_PATH = ((Ingredient, 'data/ingredients.csv'),
+                  (Tag, 'data/tags.csv'))
 
     def handle(self, *args, **options):
         if self.__check_model_object():
@@ -20,7 +21,7 @@ class Command(BaseCommand):
                         row: dict = row
                         model.objects.create(**row)
                     csv_file.close()
-            return f'Данные успешно загружены.'
+            return 'Данные успешно загружены.'
         else:
             sys.exit()
 

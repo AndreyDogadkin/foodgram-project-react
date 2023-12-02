@@ -126,7 +126,9 @@ class RecipeCreateSerializer(RecipeReadSerializer):
 
     def validate_name(self, name):
         user = self.context.get('request').user
-        if Recipe.objects.filter(author=user, name=name).exists():
+        method = self.context.get('request').method
+        if (method == 'POST'
+                and Recipe.objects.filter(author=user, name=name).exists()):
             raise serializers.ValidationError(
                 f'У вас уже есть рецепт с именем {name}.')
         return name
