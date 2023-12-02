@@ -7,4 +7,4 @@ class RecipesConfig(AppConfig):
     verbose_name = 'Рецепты'
 
     def ready(self):
-        from api import signals
+        from api import signals  # noqa
