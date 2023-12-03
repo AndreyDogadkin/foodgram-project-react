@@ -8,15 +8,8 @@ from users.models import Follow, FoodgramUser
 User = get_user_model()
 
 
-class BaseFoodrgramUserAdmin(UserAdmin):
-    """Базовая админ-модель с пагинацией."""
-
-    list_per_page = 50
-    list_max_show_all = 100
-
-
 @admin.register(User)
-class FoodgramUserAdmin(BaseFoodrgramUserAdmin):
+class FoodgramUserAdmin(UserAdmin):
     """
     Преставление, создание, редактирование и удаление пользователей.
     Поля is_admin, followers_count, recipes_count получены с помощью
@@ -39,7 +32,6 @@ class FoodgramUserAdmin(BaseFoodrgramUserAdmin):
     search_fields = ('username', 'email', 'id')
     list_per_page = 50
     list_max_show_all = 100
-    readonly_fields = ('date_joined',)
 
     @admin.display(description='Статус администратора',
                    boolean=True)
@@ -70,7 +62,7 @@ class FoodgramUserAdmin(BaseFoodrgramUserAdmin):
 
 
 @admin.register(Follow)
-class FollowAdmin(BaseFoodrgramUserAdmin):
+class FollowAdmin(admin.ModelAdmin):
     """Преставление, создание, редактирование и удаление подписок."""
     fields = (('user', 'following'),)
     list_display = ('id', '__str__', 'user', 'following',
@@ -79,3 +71,5 @@ class FollowAdmin(BaseFoodrgramUserAdmin):
     list_filter = ('user__username',)
     search_fields = ('user__username',)
     date_hierarchy = 'added_date'
+    list_per_page = 50
+    list_max_show_all = 100
