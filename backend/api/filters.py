@@ -20,11 +20,14 @@ class CustomRecipeFilter(FilterSet):
         Пример: tags=lunch&tags=breakfast
     """
     author = filters.NumberFilter(field_name='author__id')
-    tags = filters.AllValuesMultipleFilter(field_name='tags__slug')
+    tags = filters.AllValuesMultipleFilter(field_name='tags__slug',
+                                           label='Теги')
     is_favorited = filters.NumberFilter(
-        method='filter_is_favorited', max_value=1, min_value=0)
+        method='filter_is_favorited',
+        max_value=1, min_value=0, label='В избранном')
     is_in_shopping_cart = filters.NumberFilter(
-        method='filter_is_in_shopping_cart', max_value=1, min_value=0)
+        method='filter_is_in_shopping_cart',
+        max_value=1, min_value=0, label='В корзине')
 
     def filter_is_favorited(self, queryset, name, value):
         if value and self.request.user.is_authenticated:
