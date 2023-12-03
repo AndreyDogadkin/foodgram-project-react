@@ -1,4 +1,3 @@
-# flake8: noqa
 from django.apps import AppConfig
 
 
@@ -7,5 +6,5 @@ class RecipesConfig(AppConfig):
     name = 'recipes'
     verbose_name = 'Рецепты'
 
-    # def ready(self):
-    #     from api import signals  # noqa
+    def ready(self):
+        from api import signals  # noqa
