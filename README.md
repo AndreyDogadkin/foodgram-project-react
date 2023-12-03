@@ -1,4 +1,4 @@
-# **Kittygram Project ![Logo](https://kittythreads.ddns.net/static/media/logo.018b6643f3dd14ed8a10432df1ab2a2b.svg)**
+# **FOODGRAM PROJECT**
 
 ## О проекте:
 Foodgram — социальная сеть для обмена рецептами любимых блюд. 
