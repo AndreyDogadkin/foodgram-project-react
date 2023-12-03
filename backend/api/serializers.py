@@ -78,8 +78,9 @@ class RecipeReadSerializer(serializers.ModelSerializer):
     is_in_shopping_cart = serializers.SerializerMethodField(read_only=True)
 
     def get_extra_field(self, obj, model):
-        if not self.context.get('request').user.is_anonymous:
-            return model.objects.filter(recipe=obj).exists()
+        user = self.context.get('request').user
+        if not user.is_anonymous:
+            return model.objects.filter(recipe=obj, user=user).exists()
         return False
 
     def get_is_favorited(self, obj):
