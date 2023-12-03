@@ -1,4 +1,4 @@
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, password_validation
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
@@ -18,6 +18,10 @@ class UserCreateSerializer(serializers.ModelSerializer):
                 f'Недопустимое имя: {username}'
             )
         return username
+
+    def validate_password(self, value):
+        password_validation.validate_password(value, self.instance)
+        return value
 
     def create(self, validated_data):
         return User.objects.create_user(**validated_data)
