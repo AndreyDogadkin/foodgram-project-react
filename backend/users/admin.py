@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth import get_user_model
+from django.contrib.auth.admin import UserAdmin
 
 from recipes.models import Recipe
 from users.models import Follow, FoodgramUser
@@ -7,7 +8,7 @@ from users.models import Follow, FoodgramUser
 User = get_user_model()
 
 
-class BaseFoodrgramUserAdmin(admin.ModelAdmin):
+class BaseFoodrgramUserAdmin(UserAdmin):
     """Базовая админ-модель с пагинацией."""
 
     list_per_page = 50
@@ -21,10 +22,15 @@ class FoodgramUserAdmin(BaseFoodrgramUserAdmin):
     Поля is_admin, followers_count, recipes_count получены с помощью
     дополнительных методов.
     """
-    fields = (('username', 'email'), ('first_name', 'last_name'),
-              'password', 'role',
-              ('is_superuser', 'is_staff'),
-              'is_active', 'date_joined')
+    fieldsets = (
+        (None, {'fields': ('username', 'password')}),
+        ('Персональная информация', {'fields': ('first_name',
+                                                'last_name',
+                                                'email')}),
+        ('Права доступа', {
+            'fields': ('is_active', 'is_staff', 'is_superuser', 'role'),
+        }),
+    )
     list_display = ('id', 'username', 'email', 'followers_count',
                     'recipes_count', 'role', 'is_admin', 'is_staff',
                     'is_superuser')
@@ -54,14 +60,13 @@ class FoodgramUserAdmin(BaseFoodrgramUserAdmin):
     def save_model(self, request, obj: FoodgramUser, form, change):
         """
         Создание пользователя.
-        Метод переопределен для хеширования пароля и
-        автоматической установки статуса персонала,
+        Метод переопределен для автоматической
+        установки статуса персонала,
         если роль пользователя - администратор.
         """
         if obj.role == 'admin':
             obj.is_staff = True
-        obj.set_password(obj.password)
-        obj.save()
+        super().save_model(request, obj, form, change)
 
 
 @admin.register(Follow)
