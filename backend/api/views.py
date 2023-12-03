@@ -247,7 +247,6 @@ class RecipeViewSet(ModelViewSet):
             response['Content-Disposition'] = (
                 f'attachment; filename={user.username}_shopping_list.txt'
             )
-            response.write(codecs.BOM_UTF8)
             return response
 
         return Response(

@@ -1,7 +1,19 @@
+import django_filters
+from django import forms
 from django_filters.rest_framework import FilterSet, filters
 from rest_framework.filters import SearchFilter
 
 from recipes.models import Recipe
+
+
+class NoValidationMultipleChoiceField(forms.MultipleChoiceField):
+
+    def validate(self, value):
+        pass
+
+
+class CustomTagFilter(django_filters.AllValuesMultipleFilter):
+    field_class = NoValidationMultipleChoiceField
 
 
 class IngredientNameSearchFilter(SearchFilter):
@@ -19,9 +31,9 @@ class CustomRecipeFilter(FilterSet):
     - tags=<slug> -- Только рецепты с выбранными тегами
         Пример: tags=lunch&tags=breakfast
     """
-    author = filters.NumberFilter(field_name='author__id')
-    tags = filters.AllValuesMultipleFilter(field_name='tags__slug',
-                                           label='Теги')
+    author = filters.NumberFilter(field_name='author__id', min_value=1)
+    tags = CustomTagFilter(field_name='tags__slug',
+                           label='Теги')
     is_favorited = filters.NumberFilter(
         method='filter_is_favorited',
         max_value=1, min_value=0, label='В избранном')
