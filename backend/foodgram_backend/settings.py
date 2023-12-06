@@ -14,6 +14,8 @@ SECRET_KEY = env.str('SECRET_KEY')
 
 DEBUG = env.bool('DEBUG')
 
+DB_PROD = env.bool('DB_PROD')
+
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS')
 
 
@@ -64,7 +66,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'foodgram_backend.wsgi.application'
 
-if env.bool('DB_PROD'):
+if DB_PROD:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',

@@ -12,7 +12,6 @@ jobs:
         postgres:
           image: postgres:13.10
           env:
-            DB_PROD: ${{ secrets.DB_PROD }}
             POSTGRES_USER: django_user
             POSTGRES_PASSWORD: django_password
             POSTGRES_DB: django_db
@@ -35,6 +34,7 @@ jobs:
         env:
           SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
           DEBUG: True
+          DB_PROD: False
           ALLOWED_HOSTS: '*'
           POSTGRES_USER: django_user
           POSTGRES_PASSWORD: django_password
