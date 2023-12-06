@@ -141,7 +141,7 @@ class RecipeCreateSerializer(RecipeReadSerializer):
         return ingredients
 
     def add_ingredients(self, recipe, ingredients):
-        ingredients.sort(key=lambda x: x['id'].id)
+        ingredients.sort(key=lambda x: x['id'].name)
         ingredients = [
             RecipeIngredient(
                 recipe=recipe,
@@ -154,7 +154,7 @@ class RecipeCreateSerializer(RecipeReadSerializer):
     def create(self, validated_data):
         tags = validated_data.pop('tags')
         ingredients = validated_data.pop('ingredients')
-        recipe = Recipe.objects.create(**validated_data)
+        recipe = super().create(validated_data)
         recipe.tags.set(tags)
         self.add_ingredients(recipe=recipe, ingredients=ingredients)
         return recipe

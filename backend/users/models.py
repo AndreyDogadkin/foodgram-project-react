@@ -75,7 +75,7 @@ class Follow(models.Model):
             ),
             models.CheckConstraint(
                 check=~models.Q(following=models.F('user')),
-                name='author_is_not_user'
+                name='user_is_not_following'
             ),
         )
         ordering = ('-added_date', )
