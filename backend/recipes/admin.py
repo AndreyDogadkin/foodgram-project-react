@@ -7,11 +7,10 @@ from .models import (Recipe,
                      ShoppingList,
                      Favorites)
 
-
 admin.site.empty_value_display = 'Не задано'
 
 
-class BaseFoodrgramRecipeAdmin(admin.ModelAdmin):
+class BaseFoodgramAdmin(admin.ModelAdmin):
     """Базовая админ-модель с пагинацией."""
 
     list_per_page = 50
@@ -22,11 +21,12 @@ class InlineIngredients(admin.StackedInline):
     """Инлайн поле для создания и редактирования рецептов."""
 
     model = RecipeIngredient
+    min_num = 1
     extra = 1
 
 
 @admin.register(Recipe)
-class RecipeFoodrgramRecipeAdmin(BaseFoodrgramRecipeAdmin):
+class RecipeFoodgramAdmin(BaseFoodgramAdmin):
     """
     Представление, создание, редактирование и удаление рецептов.
     Поля ingredients_in_recipe и favorite_count получены
@@ -38,7 +38,7 @@ class RecipeFoodrgramRecipeAdmin(BaseFoodrgramRecipeAdmin):
               'tags',
               ('image', 'cooking_time'))
     list_display = ('id', 'name', 'author', 'ingredients_in_recipe',
-                    'favorite_count', 'pub_date')
+                    'tags_in_recipe', 'favorite_count', 'pub_date')
     list_filter = ('author', 'tags')
     list_display_links = ('name', 'id')
     date_hierarchy = 'pub_date'
@@ -56,9 +56,14 @@ class RecipeFoodrgramRecipeAdmin(BaseFoodrgramRecipeAdmin):
         """Список ингредиентов рецепта."""
         return list(recipe.ingredients.only('name'))
 
+    @admin.display(description='Теги')
+    def tags_in_recipe(self, recipe: Recipe):
+        """Список ингредиентов рецепта."""
+        return list(recipe.tags.only('name'))
+
 
 @admin.register(Tag)
-class TagFoodrgramRecipeAdmin(BaseFoodrgramRecipeAdmin):
+class TagFoodgramAdmin(BaseFoodgramAdmin):
     """Представление, создание, редактирование и удаление тегов."""
 
     fields = (('name', 'slug'), 'color')
@@ -68,7 +73,7 @@ class TagFoodrgramRecipeAdmin(BaseFoodrgramRecipeAdmin):
 
 
 @admin.register(Ingredient)
-class IngredientFoodrgramRecipeAdmin(BaseFoodrgramRecipeAdmin):
+class IngredientFoodgramAdmin(BaseFoodgramAdmin):
     """Представление, создание, редактирование и удаление ингредиентов."""
 
     fields = (('name', 'measurement_unit'),)
@@ -78,7 +83,7 @@ class IngredientFoodrgramRecipeAdmin(BaseFoodrgramRecipeAdmin):
 
 
 @admin.register(ShoppingList)
-class ShoppingListFoodrgramRecipeAdmin(BaseFoodrgramRecipeAdmin):
+class ShoppingListFoodgramAdmin(BaseFoodgramAdmin):
     """
     Представление, создание, редактирование и удаление из списка покупок.
     """
@@ -90,7 +95,7 @@ class ShoppingListFoodrgramRecipeAdmin(BaseFoodrgramRecipeAdmin):
 
 
 @admin.register(Favorites)
-class FavoriteAdmin(ShoppingListFoodrgramRecipeAdmin):
+class FavoriteAdmin(ShoppingListFoodgramAdmin):
     """
     Представление, создание, редактирование и удаление из избранного.
     """

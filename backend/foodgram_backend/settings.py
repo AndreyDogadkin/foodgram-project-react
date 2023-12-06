@@ -27,6 +27,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'django_filters',
+    'colorfield',
     'users.apps.UsersConfig',
     'api.apps.ApiConfig',
     'recipes.apps.RecipesConfig',
@@ -63,17 +64,34 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'foodgram_backend.wsgi.application'
 
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': env.str('POSTGRES_DB', 'django'),
-        'USER': env.str('POSTGRES_USER', 'django'),
-        'PASSWORD': env.str('POSTGRES_PASSWORD', ''),
-        'HOST': env.str('DB_HOST', ''),
-        'PORT': env.int('DB_PORT', 5432)
+if env.bool('DB_PROD'):
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': env.str('POSTGRES_DB', 'django'),
+            'USER': env.str('POSTGRES_USER', 'django'),
+            'PASSWORD': env.str('POSTGRES_PASSWORD', ''),
+            'HOST': env.str('DB_HOST', ''),
+            'PORT': env.int('DB_PORT', 5432)
+        }
     }
-}
+
+    STATIC_URL = '/static/'
+    STATIC_ROOT = BASE_DIR / 'collected_static'
+    MEDIA_URL = '/media/'
+    MEDIA_ROOT = '/media'
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
+
+    STATIC_URL = '/static/'
+    STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+    MEDIA_URL = '/media/'
+    MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
 
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -101,12 +119,6 @@ USE_I18N = True
 USE_L10N = True
 
 USE_TZ = True
-
-
-STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / 'collected_static'
-MEDIA_URL = '/media/'
-MEDIA_ROOT = '/media'
 
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

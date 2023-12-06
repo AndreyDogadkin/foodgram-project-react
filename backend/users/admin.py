@@ -1,6 +1,8 @@
 from django.contrib import admin
 from django.contrib.auth import get_user_model
 from django.contrib.auth.admin import UserAdmin
+from django.contrib.auth.models import Group
+from rest_framework.authtoken.models import TokenProxy
 
 from recipes.models import Recipe
 from users.models import Follow, FoodgramUser
@@ -25,7 +27,7 @@ class FoodgramUserAdmin(UserAdmin):
         }),
     )
     list_display = ('id', 'username', 'email', 'followers_count',
-                    'recipes_count', 'role', 'is_admin', 'is_staff',
+                    'recipes_count', 'is_admin', 'is_staff',
                     'is_superuser')
     list_display_links = ('username', 'id')
     date_hierarchy = 'date_joined'
@@ -56,8 +58,10 @@ class FoodgramUserAdmin(UserAdmin):
         установки статуса персонала,
         если роль пользователя - администратор.
         """
-        if obj.role == 'admin':
+        if obj.is_admin():
             obj.is_staff = True
+        else:
+            obj.is_staff = False
         super().save_model(request, obj, form, change)
 
 
@@ -73,3 +77,7 @@ class FollowAdmin(admin.ModelAdmin):
     date_hierarchy = 'added_date'
     list_per_page = 50
     list_max_show_all = 100
+
+
+admin.site.unregister(Group)
+admin.site.unregister(TokenProxy)

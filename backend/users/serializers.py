@@ -11,6 +11,18 @@ User = get_user_model()
 class UserCreateSerializer(serializers.ModelSerializer):
     """Создание пользователей."""
 
+    class Meta:
+        model = User
+        fields = ('id', 'email', 'username', 'first_name',
+                  'last_name', 'password')
+        extra_kwargs = {
+            "email": {"required": True},
+            "username": {"required": True},
+            "password": {'write_only': True},
+            "first_name": {"required": True},
+            "last_name": {"required": True},
+        }
+
     @staticmethod
     def validate_username(username):
         if username.lower() == 'me':
@@ -26,18 +38,6 @@ class UserCreateSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         return User.objects.create_user(**validated_data)
 
-    class Meta:
-        model = User
-        fields = ('id', 'email', 'username', 'first_name',
-                  'last_name', 'password')
-        extra_kwargs = {
-            "email": {"required": True},
-            "username": {"required": True},
-            "password": {'write_only': True},
-            "first_name": {"required": True},
-            "last_name": {"required": True},
-        }
-
 
 class UserReadSerializer(serializers.ModelSerializer):
     """
@@ -47,19 +47,19 @@ class UserReadSerializer(serializers.ModelSerializer):
 
     is_subscribed = serializers.SerializerMethodField(read_only=True)
 
-    def get_is_subscribed(self, following):
-        user = self.context.get('request').user
-        if not user.is_anonymous:
-            return Follow.objects.filter(
-                user=user,
-                following=following
-            ).exists()
-        return False
-
     class Meta:
         model = User
         fields = ('id', 'email', 'username', 'first_name',
                   'last_name', 'is_subscribed')
+
+    def get_is_subscribed(self, following):
+        request = self.context.get('request')
+        if not request or request.user.is_anonymous:
+            return False
+        return Follow.objects.filter(
+            user=request.user,
+            following=following
+        ).exists()
 
 
 class FollowRecipeSerializer(serializers.ModelSerializer):
@@ -98,7 +98,15 @@ class FollowSerializer(serializers.ModelSerializer):
     )
     is_subscribed = serializers.SerializerMethodField()
     recipes = serializers.SerializerMethodField()
-    recipes_count = serializers.SerializerMethodField()
+    recipes_count = serializers.ReadOnlyField(
+        source='following.recipes.count'
+    )
+
+    class Meta:
+        model = Follow
+        fields = ('email', 'id', 'username', 'first_name',
+                  'last_name', 'is_subscribed', 'recipes',
+                  'recipes_count')
 
     def get_is_subscribed(self, follow_obj):
         user = self.context.get('request').user
@@ -108,10 +116,6 @@ class FollowSerializer(serializers.ModelSerializer):
             user=follow_obj.user,
             following=follow_obj.following
         ).exists()
-
-    @staticmethod
-    def get_recipes_count(follow_obj):
-        return Recipe.objects.filter(author=follow_obj.following).count()
 
     def get_recipes(self, follow_obj):
         request = self.context.get('request')
@@ -135,9 +139,3 @@ class FollowSerializer(serializers.ModelSerializer):
                 f'Вы уже подписаны на пользователя {following}.',
             )
         return data
-
-    class Meta:
-        model = Follow
-        fields = ('email', 'id', 'username', 'first_name',
-                  'last_name', 'is_subscribed', 'recipes',
-                  'recipes_count')
