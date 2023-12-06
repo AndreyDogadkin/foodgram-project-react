@@ -12,6 +12,7 @@ jobs:
         postgres:
           image: postgres:13.10
           env:
+            DB_PROD: ${{ secrets.DB_PROD }}
             POSTGRES_USER: django_user
             POSTGRES_PASSWORD: django_password
             POSTGRES_DB: django_db
