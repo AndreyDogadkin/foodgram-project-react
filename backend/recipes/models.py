@@ -1,7 +1,13 @@
+from colorfield.fields import ColorField
 from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 
+from foodgram_backend.constants import (RecipeConstants,
+                                        TagConstants,
+                                        IngredientConstants,
+                                        RecipeIngredientConstants,
+                                        )
 from recipes.validators import validate_hex_color
 
 User = get_user_model()
@@ -22,7 +28,7 @@ class Recipe(models.Model):
     """
 
     name = models.CharField(
-        max_length=200,
+        max_length=RecipeConstants.MAX_LEN_NAME,
         verbose_name='Название'
     )
     text = models.TextField(verbose_name='Описание')
@@ -38,10 +44,12 @@ class Recipe(models.Model):
     )
     cooking_time = models.PositiveSmallIntegerField(
         validators=[
-            MinValueValidator(limit_value=1,
-                              message='Минимальное значение "1".'),
-            MaxValueValidator(limit_value=2880,
-                              message='Слишком большое значение.')
+            MinValueValidator(
+                limit_value=RecipeConstants.MIN_COOKING_TIME,
+                message='Минимальное значение "1".'),
+            MaxValueValidator(
+                limit_value=RecipeConstants.MAX_COOKING_TIME,
+                message='Слишком большое значение.')
         ],
         verbose_name='Время приготовления'
     )
@@ -62,9 +70,6 @@ class Recipe(models.Model):
         editable=False
     )
 
-    def __str__(self):
-        return self.name
-
     class Meta:
         constraints = (
             models.UniqueConstraint(
@@ -75,6 +80,9 @@ class Recipe(models.Model):
         ordering = ('-pub_date',)
         verbose_name = 'Рецепт'
         verbose_name_plural = 'Рецепты'
+
+    def __str__(self):
+        return self.name
 
 
 class Tag(models.Model):
@@ -87,28 +95,28 @@ class Tag(models.Model):
     """
 
     name = models.CharField(
-        max_length=16,
+        max_length=TagConstants.MAX_LEN_NAME,
         verbose_name='Название',
         unique=True
     )
-    color = models.CharField(
-        max_length=16,
+    color = ColorField(
+        max_length=TagConstants.MAX_LEN_COLOR,
         verbose_name='Цветовой код',
         unique=True,
         validators=[validate_hex_color]
     )
     slug = models.SlugField(
-        max_length=50,
+        max_length=TagConstants.MAX_LEN_SLUG,
         unique=True,
         verbose_name='Слаг'
     )
 
-    def __str__(self):
-        return self.name
-
     class Meta:
         verbose_name = 'Тег'
         verbose_name_plural = 'Теги'
+
+    def __str__(self):
+        return self.name
 
 
 class Ingredient(models.Model):
@@ -119,16 +127,13 @@ class Ingredient(models.Model):
     """
 
     name = models.CharField(
-        max_length=200,
+        max_length=IngredientConstants.MAX_LEN_NAME,
         verbose_name='Название'
     )
     measurement_unit = models.CharField(
-        max_length=200,
+        max_length=IngredientConstants.MAX_LEN_UNIT,
         verbose_name='Единицы измерения'
     )
-
-    def __str__(self):
-        return self.name
 
     class Meta:
         constraints = (
@@ -139,6 +144,9 @@ class Ingredient(models.Model):
         )
         verbose_name = 'Ингредиент'
         verbose_name_plural = 'Ингредиенты'
+
+    def __str__(self):
+        return self.name
 
 
 class RecipeIngredient(models.Model):
@@ -165,10 +173,12 @@ class RecipeIngredient(models.Model):
     )
     amount = models.PositiveSmallIntegerField(
         validators=[
-            MinValueValidator(limit_value=1,
-                              message='Минимальное значение "1".'),
-            MaxValueValidator(limit_value=10000,
-                              message='Слишком большое значение.')],
+            MinValueValidator(
+                limit_value=RecipeIngredientConstants.MIN_AMOUNT,
+                message='Минимальное значение "1".'),
+            MaxValueValidator(
+                limit_value=RecipeIngredientConstants.MAX_AMOUNT,
+                message='Слишком большое значение.')],
         default=1,
         verbose_name='Количество'
     )
@@ -182,6 +192,9 @@ class RecipeIngredient(models.Model):
         )
         verbose_name = 'Количество ингредиента'
         verbose_name_plural = 'Количество ингредиентов'
+
+    def __str__(self):
+        return f'{self.ingredient.name} -- {self.recipe.name}'
 
 
 class Favorites(models.Model):
@@ -212,9 +225,6 @@ class Favorites(models.Model):
         editable=False
     )
 
-    def __str__(self):
-        return f'{self.recipe.name} -- {self.user.username}'
-
     class Meta:
         constraints = (
             models.UniqueConstraint(
@@ -224,6 +234,9 @@ class Favorites(models.Model):
         )
         verbose_name = 'Избранный рецепт'
         verbose_name_plural = 'Избранные рецепты'
+
+    def __str__(self):
+        return f'{self.recipe.name} -- {self.user.username}'
 
 
 class ShoppingList(models.Model):
@@ -254,9 +267,6 @@ class ShoppingList(models.Model):
         editable=False
     )
 
-    def __str__(self):
-        return f'{self.recipe.name} -- {self.user.username}'
-
     class Meta:
         constraints = (
             models.UniqueConstraint(
@@ -266,3 +276,6 @@ class ShoppingList(models.Model):
         )
         verbose_name = 'Список покупок'
         verbose_name_plural = 'Списки покупок'
+
+    def __str__(self):
+        return f'{self.recipe.name} -- {self.user.username}'

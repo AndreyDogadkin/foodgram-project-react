@@ -31,7 +31,6 @@ class CustomRecipeFilter(FilterSet):
     - tags=<slug> -- Только рецепты с выбранными тегами
         Пример: tags=lunch&tags=breakfast
     """
-    author = filters.NumberFilter(field_name='author__id', min_value=1)
     tags = CustomTagFilter(field_name='tags__slug',
                            label='Теги')
     is_favorited = filters.NumberFilter(

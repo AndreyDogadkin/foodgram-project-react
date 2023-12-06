@@ -1,5 +1,6 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from foodgram_backend.constants import FoodgramUserConstants
 
 
 class FoodgramUser(AbstractUser):
@@ -10,27 +11,30 @@ class FoodgramUser(AbstractUser):
     Дополнительное поле role - Выбор пользователь или администратор.
     """
 
-    ROLE_CHOICES = (
-        ('user', 'user'),
-        ('admin', 'admin'),
-    )
+    class Role(models.TextChoices):
+        ADMIN = 'admin', 'admin'
+        USER = 'user', 'user'
+
     email = models.EmailField(
         unique=True,
         verbose_name='Электронная почта'
     )
     role = models.CharField(
-        choices=ROLE_CHOICES,
-        default='user',
-        max_length=8,
+        choices=Role.choices,
+        default=Role.USER,
+        max_length=FoodgramUserConstants.MAX_LEN_ROLE,
         verbose_name='Роль'
     )
-
-    def __str__(self):
-        return self.username
 
     class Meta:
         verbose_name = 'Пользователь'
         verbose_name_plural = 'Пользователи'
+
+    def is_admin(self):
+        return self.role == self.Role.ADMIN
+
+    def __str__(self):
+        return self.username
 
 
 class Follow(models.Model):
@@ -61,9 +65,6 @@ class Follow(models.Model):
         editable=False
     )
 
-    def __str__(self):
-        return f'{self.user.username} -> {self.following.username}'
-
     class Meta:
         verbose_name = 'Подписка'
         verbose_name_plural = 'Подписки'
@@ -72,5 +73,12 @@ class Follow(models.Model):
                 fields=('user', 'following'),
                 name='user_followed_uniq'
             ),
+            models.CheckConstraint(
+                check=~models.Q(following=models.F('user')),
+                name='author_is_not_user'
+            ),
         )
         ordering = ('-added_date', )
+
+    def __str__(self):
+        return f'{self.user.username} -> {self.following.username}'
