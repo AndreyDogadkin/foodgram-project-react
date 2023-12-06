@@ -2,7 +2,6 @@
 
 import colorfield.fields
 from django.db import migrations
-import recipes.validators
 
 
 class Migration(migrations.Migration):
@@ -15,6 +14,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='tag',
             name='color',
-            field=colorfield.fields.ColorField(default='#FFFFFF', image_field=None, max_length=7, samples=None, unique=True, validators=[recipes.validators.validate_hex_color], verbose_name='Цветовой код'),
+            field=colorfield.fields.ColorField(default='#FFFFFF', image_field=None, max_length=7, samples=None, unique=True, verbose_name='Цветовой код'),
         ),
     ]

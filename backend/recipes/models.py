@@ -8,7 +8,6 @@ from foodgram_backend.constants import (RecipeConstants,
                                         IngredientConstants,
                                         RecipeIngredientConstants,
                                         )
-from recipes.validators import validate_hex_color
 
 User = get_user_model()
 
@@ -103,7 +102,6 @@ class Tag(models.Model):
         max_length=TagConstants.MAX_LEN_COLOR,
         verbose_name='Цветовой код',
         unique=True,
-        validators=[validate_hex_color]
     )
     slug = models.SlugField(
         max_length=TagConstants.MAX_LEN_SLUG,

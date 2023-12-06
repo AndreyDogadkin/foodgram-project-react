@@ -3,7 +3,6 @@
 import django.core.validators
 from django.db import migrations, models
 import django.db.models.deletion
-import recipes.validators
 
 
 class Migration(migrations.Migration):
@@ -69,7 +68,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('name', models.CharField(max_length=16, unique=True, verbose_name='Название')),
-                ('color', models.CharField(max_length=16, unique=True, validators=[recipes.validators.validate_hex_color], verbose_name='Цветовой код')),
+                ('color', models.CharField(max_length=16, unique=True, verbose_name='Цветовой код')),
                 ('slug', models.SlugField(unique=True, verbose_name='Слаг')),
             ],
             options={
